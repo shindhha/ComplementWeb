@@ -16,7 +16,7 @@
 	
 	function appelAPI($apiUrl) {
 		// Interrogation de l'API
-		
+		// Retourne le résultat en format JSON
 		$curl = curl_init();									// Initialisation
 
 		curl_setopt($curl, CURLOPT_URL, $apiUrl);				// Url de l'API à appeler
@@ -24,10 +24,16 @@
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); 		// Désactive test certificat
 		curl_setopt($curl, CURLOPT_FAILONERROR, true);
 		
+		// A utiliser sur le réseau des PC IUT, pas en WIFI, pas sur une autre connexion
+		$proxy="http://cache.iut-rodez.fr:8080";
+		curl_setopt($curl, CURLOPT_HTTPPROXYTUNNEL, true);
+		curl_setopt($curl, CURLOPT_PROXY,$proxy ) ;
+		///////////////////////////////////////////////////////////////////////////////
 		$result = curl_exec($curl);								// Exécution
 		$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);	// Récupération statut 
 		// Si 404  indique qu'un serveur ne peut pas trouver la ressource demandée
 		// Si 200 c'est OK
+		
 		curl_close($curl);										// Cloture curl
 		
 		if ($http_status=="200") {								// OK, l'appel s'est bien passé
@@ -37,7 +43,23 @@
 			return $result;
 		}
 	}
-
+	
+	function pIsset($name,$valueExpected = null) {
+		if ($valueExpected != null) {
+			return isset($_GET[$name]) && $_GET[$name] != "" && $_GET[$name] == $valueExpected;
+		}
+		return isset($_GET[$name]) && $_GET[$name] != "";
+	}
+	function issetAll($array) {
+		$isOk = true;
+		foreach ($array as $value) {
+			$isOk &= pIsset($value);
+		}
+		return $isOk;
+	}
+	function addVariable($name) {
+		return $name . "=" . $_GET[$name]; 
+	}
 ?>
 
 
@@ -71,13 +93,11 @@
 						<select name="region"  class="form-control">
 							<option value="">Choisir une région</option>
 							<?php
-								$regionOk = false;
 								$regions->asort();
 								foreach($regions as $reg){
 									echo '<option value="'.$reg['code'].'"';
-									if (isset($_GET["region"]) && $_GET["region"] == $reg['code']) {
+									if (pIsset("region",$reg['code'])) {
 										echo ' selected';
-										$regionOk = true;
 									}
 									echo '>'.$reg['nom'].'</option>';
 								}
@@ -92,7 +112,7 @@
 				<div class="col-xs-4 cadresCom hauteurMin">
 					
 					<?php 
-						if ($regionOk){
+						if (pIsset('region')){
 							$departementTempo = appelAPI("https://geo.api.gouv.fr/regions/".$_GET["region"]."/departements");
 							$departement = new ArrayObject($departementTempo);
 					?>
@@ -105,14 +125,12 @@
 						<select name="departement"  class="form-control">
 							<option value="">Choisir un département</option>
 							<?php
-								$departementOk = false;
 								$departement->asort();
 								if (sizeof($departement) != 1) {
 									foreach($departement as $dep){
 										echo '<option value="'.$dep["code"].'"';
-										if (isset($_GET["departement"]) && $_GET["departement"] == $dep['code']) {
+										if (pIsset('departement',$dep['code'])) {
 											echo ' selected';
-											$departementOk = true;
 											
 										}
 										echo '>'.$dep['nom'].'</option>';
@@ -121,7 +139,6 @@
 									echo '<option value="'.$departement[0]["code"].'" selected>'.$departement[0]["nom"].'</option>';
 									$_GET["departement"] = $departement[0]["code"];
 									$codeDepartement = $departement[0]["code"];
-									$departementOk = true;
 								}
 
 							?>
@@ -138,7 +155,7 @@
 				<div class="col-xs-4 cadresCom hauteurMin">
 
 					<?php 
-						if ($regionOk && $departementOk){
+						if (issetAll(['region','departement'])){
 							$communesTempo = appelAPI("https://geo.api.gouv.fr/departements/". $_GET["departement"] . "/communes");
 							$communes = new ArrayObject($communesTempo);
 					?>
@@ -153,7 +170,6 @@
 						<select name="commune"  class="form-control">
 							<option value="">Choisir une commune</option>
 							<?php
-								$communeOk = false;
 								$communes->asort();
 								if (sizeof($communes) != 1) {
 									foreach($communes as $comm){
@@ -166,7 +182,6 @@
 									}
 								}else {
 									echo '<option value="'.$communes[0]["nom"].'" selected>'.$communes[0]["nom"].'</option>';
-									$communeOk = true;
 								}
 								
 
@@ -186,7 +201,7 @@
 			<!-- Commune remplie, on affiche les renseignements -->
 			
 			<?php 
-				if ($regionOk && $departementOk && $communeOk){
+				if (issetAll(["commune","departement","region"])){
 					$communeInfo = appelAPI("https://geo.api.gouv.fr/communes/".$_GET["commune"]);
 					$communauteComm = appelAPI("https://geo.api.gouv.fr/epcis/".$communeInfo['codeEpci']);
 					$communesCommunauteTempo = appelAPI("https://geo.api.gouv.fr/epcis/".$communeInfo['codeEpci']."/communes");
@@ -216,7 +231,7 @@
 									$communesCommunaute = new ArrayObject($communesCommunauteTempo);
 									$communesCommunaute->asort();
 									foreach($communesCommunaute as $comm) {
-										echo '<li><a href="tp2.php?commune='.$comm['code'].'">'.$comm['nom'].'</a></li>';
+										echo '<li><a href="tp2.php?region='.$comm[''].'commune='.$comm['code'].'">'.$comm['nom'].'</a></li>';
 									}
 								?>
 							</ul>
@@ -226,7 +241,8 @@
 							<ul>
 								<?php
 									foreach($communeInfo['codesPostaux'] as $cp){
-										echo '<li>'.$cp.'</li>';
+
+										echo "<li><a href='tp2.php?".addVariable("region")."&".addVariable("departement")."&commune=".$cp."'>".$cp.'</li>';
 									}
 								?>
 							</ul>
