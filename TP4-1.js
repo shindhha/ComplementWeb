@@ -79,11 +79,46 @@
 //			messageErreur="Respuesta incorrecta, aquí está la bandera del país ";
 //			break ;
 //	}
+function showListFlag(tableau,container) {
+	container.innerHTML = "<tr><th> Code </th> <th> Pays</th> <th> Drapeau</th></tr>";
+	let content;
+	for (let index = 0;  index < tableau.length; index++) {
+		content = tableau[index];
+		container.innerHTML += "<tr>"
+		                       + "<td>" + content['code'] + "</td>" 
+							   + "<td>" + content['nom'] + "</td>" 
+							   + "<td>" + "<img src=" + content['drapeau'] + " class='hightFlag'>" + "</td>"
+							   +"</tr>";
+	}
+}
 
 document.addEventListener('DOMContentLoaded', function (event) {
 	// Attente que le DOM soit chargé avant d'utiliser Javascript
 	// Ecrire votre code ici
 	
-	
+	myContent = document.getElementById("myContent");
+	btnFr = document.getElementById("leBoutonFr");
+	btnEs = document.getElementById("leBoutonEs");
+	btnEn = document.getElementById("leBoutonEn");
+
+	btnFr.addEventListener('click', () => {
+		showListFlag(list_Fr,myContent);
+		btnFr.disabled = true;
+		btnEs.disabled = false;
+		btnEn.disabled = false;
+	});
+	btnEn.addEventListener('click', () => {
+		showListFlag(list_En,myContent);
+		btnFr.disabled = false;
+		btnEs.disabled = false;
+		btnEn.disabled = true;
+	});
+	btnEs.addEventListener('click', () => {
+		showListFlag(list_Es,myContent);
+		btnFr.disabled = false;
+		btnEs.disabled = true;
+		btnEn.disabled = false;
+	});
+
 
 });
