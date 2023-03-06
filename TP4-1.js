@@ -79,18 +79,42 @@
 //			messageErreur="Respuesta incorrecta, aquí está la bandera del país ";
 //			break ;
 //	}
-function showListFlag(tableau,container) {
-	container.innerHTML = "<tr><th> Code </th> <th> Pays</th> <th> Drapeau</th></tr>";
-	let content;
-	for (let index = 0;  index < tableau.length; index++) {
-		content = tableau[index];
-		container.innerHTML += "<tr>"
-		                       + "<td>" + content['code'] + "</td>" 
-							   + "<td>" + content['nom'] + "</td>" 
-							   + "<td>" + "<img src=" + content['drapeau'] + " class='hightFlag'>" + "</td>"
-							   +"</tr>";
-	}
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
 }
+
+function showListFlag(tableau,container) {
+	let bonIndice = getRandomInt(0,tableau.length)
+	let position = getRandomInt(0,5)
+	let bon = tableau[bonIndice];
+	 
+	
+	container.innerHTML = "<img src=" + bon['drapeau'] + " id='theFlag'></br>"
+
+	container.innerHTML += "What country is this flag from</br>"
+
+	for (var i = 0; i < 4; i++) {
+		let content = tableau[getRandomInt(0,tableau.length)];
+		if (i == position) {
+			container.innerHTML += "<input name='country'id='bonChoi' type='radio'> "+ bon['nom'] + "</br>"
+		} 
+		container.innerHTML += "<input name='country' type='radio'> "+ content['nom'] + "</br>"
+	}
+	btns = document.getElementsByName("country")
+
+	for (btn in btns) {
+		btn.addEventListener('click', (btn) => {
+			if (btn.getAttribute('id') == 'bonChoi') {
+				btn.color = 'green'
+			} else { btn.color = 'red'}
+		})
+	}
+
+}
+
+
 
 document.addEventListener('DOMContentLoaded', function (event) {
 	// Attente que le DOM soit chargé avant d'utiliser Javascript
